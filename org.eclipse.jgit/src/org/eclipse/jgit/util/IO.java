@@ -191,9 +191,13 @@ public class IO {
 	 */
 	public static void readFully(final InputStream fd, final byte[] dst,
 			int off, int len) throws IOException {
-		int read = fd.readNBytes(dst, off, len);
-		if (read != len)
-			throw new EOFException(JGitText.get().shortReadOfBlock);
+		while (len > 0) {
+			final int r = fd.read(dst, off, len);
+			if (r <= 0)
+				throw new EOFException(JGitText.get().shortReadOfBlock);
+			off += r;
+			len -= r;
+		}
 	}
 
 	/**
@@ -261,7 +265,14 @@ public class IO {
 	 */
 	public static int readFully(InputStream fd, byte[] dst, int off)
 			throws IOException {
-		return fd.readNBytes(dst, off, dst.length - off);
+		int r;
+		int len = 0;
+		while ((r = fd.read(dst, off, dst.length - off)) >= 0
+				&& len < dst.length) {
+			off += r;
+			len += r;
+		}
+		return len;
 	}
 
 	/**
