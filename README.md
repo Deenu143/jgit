@@ -1,4 +1,6 @@
-# Java Git
+# Java Git for Android
+
+Latest Version 6.0 requires at least Java 11, I made some changes to support cloning repository on Android
 
 An implementation of the Git version control system in pure Java.
 
