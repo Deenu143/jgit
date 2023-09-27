@@ -14,6 +14,7 @@ package org.eclipse.jgit.util;
 
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +24,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.jgit.internal.JGitText;
-import org.eclipse.jgit.util.io.SilentFileInputStream;
 
 /**
  * Input/Output utilities
@@ -63,10 +62,29 @@ public class IO {
 	 * @throws java.io.IOException
 	 *             the file exists, but its contents cannot be read.
 	 */
-	public static final byte[] readSome(File path, int limit)
+	public static final byte[] readSome(final File path, final int limit)
 			throws FileNotFoundException, IOException {
-		try (SilentFileInputStream in = new SilentFileInputStream(path)) {
-			return in.readNBytes(limit);
+		FileInputStream in = new FileInputStream(path);
+		try {
+			byte[] buf = new byte[limit];
+			int cnt = 0;
+			for (;;) {
+				int n = in.read(buf, cnt, buf.length - cnt);
+				if (n <= 0)
+					break;
+				cnt += n;
+			}
+			if (cnt == buf.length)
+				return buf;
+			byte[] res = new byte[cnt];
+			System.arraycopy(buf, 0, res, 0, cnt);
+			return res;
+		} finally {
+			try {
+				in.close();
+			} catch (IOException ignored) {
+				// do nothing
+			}
 		}
 	}
 
@@ -84,15 +102,49 @@ public class IO {
 	 * @throws java.io.IOException
 	 *             the file exists, but its contents cannot be read.
 	 */
-	public static final byte[] readFully(File path, int max)
+	public static final byte[] readFully(final File path, final int max)
 			throws FileNotFoundException, IOException {
-		try (SilentFileInputStream in = new SilentFileInputStream(path)) {
-			byte[] buf = in.readNBytes(max);
-			if (in.read() != -1) {
+		final FileInputStream in = new FileInputStream(path);
+		try {
+			long sz = Math.max(path.length(), 1);
+			if (sz > max)
 				throw new IOException(MessageFormat.format(
 						JGitText.get().fileIsTooLarge, path));
+
+			byte[] buf = new byte[(int) sz];
+			int valid = 0;
+			for (;;) {
+				if (buf.length == valid) {
+					if (buf.length == max) {
+						int next = in.read();
+						if (next < 0)
+							break;
+
+						throw new IOException(MessageFormat.format(
+								JGitText.get().fileIsTooLarge, path));
+					}
+
+					byte[] nb = new byte[Math.min(buf.length * 2, max)];
+					System.arraycopy(buf, 0, nb, 0, valid);
+					buf = nb;
+				}
+				int n = in.read(buf, valid, buf.length - valid);
+				if (n < 0)
+					break;
+				valid += n;
+			}
+			if (valid < buf.length) {
+				byte[] nb = new byte[valid];
+				System.arraycopy(buf, 0, nb, 0, valid);
+				buf = nb;
 			}
 			return buf;
+		} finally {
+			try {
+				in.close();
+			} catch (IOException ignored) {
+				// ignore any close errors, this was a read only stream
+			}
 		}
 	}
 
