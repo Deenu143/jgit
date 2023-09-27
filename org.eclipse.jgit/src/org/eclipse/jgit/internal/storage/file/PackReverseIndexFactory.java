@@ -15,6 +15,7 @@ import static org.eclipse.jgit.internal.storage.file.PackReverseIndex.VERSION_1;
 
 import java.io.DataInput;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,6 @@ import java.util.Arrays;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.IO;
-import org.eclipse.jgit.util.io.SilentFileInputStream;
 
 /**
  * Factory for creating instances of {@link PackReverseIndex}.
@@ -49,7 +49,7 @@ public final class PackReverseIndexFactory {
 	static PackReverseIndex openOrCompute(File idxFile, long objectCount,
 			PackBitmapIndex.SupplierWithIOException<PackIndex> packIndexSupplier)
 			throws IOException {
-		try (SilentFileInputStream fd = new SilentFileInputStream(idxFile)) {
+		try (FileInputStream fd = new FileInputStream(idxFile)) {
 			return readFromFile(fd, objectCount, packIndexSupplier);
 		} catch (FileNotFoundException e) {
 			return computeFromIndex(packIndexSupplier.get());

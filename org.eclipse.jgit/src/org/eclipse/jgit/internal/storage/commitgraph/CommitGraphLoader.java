@@ -20,6 +20,7 @@ import static org.eclipse.jgit.internal.storage.commitgraph.CommitGraphConstants
 import static org.eclipse.jgit.internal.storage.commitgraph.CommitGraphConstants.COMMIT_GRAPH_MAGIC;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,6 @@ import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.util.IO;
 import org.eclipse.jgit.util.NB;
 import org.eclipse.jgit.util.SystemReader;
-import org.eclipse.jgit.util.io.SilentFileInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ public class CommitGraphLoader {
 	 */
 	public static CommitGraph open(File graphFile) throws FileNotFoundException,
 			CommitGraphFormatException, IOException {
-		try (SilentFileInputStream fd = new SilentFileInputStream(graphFile)) {
+		try (FileInputStream fd = new FileInputStream(graphFile)) {
 			try {
 				return read(fd);
 			} catch (CommitGraphFormatException fe) {

@@ -11,6 +11,7 @@
 package org.eclipse.jgit.internal.storage.file;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
@@ -19,7 +20,6 @@ import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.util.io.SilentFileInputStream;
 
 import com.googlecode.javaewah.EWAHCompressedBitmap;
 
@@ -60,7 +60,7 @@ public abstract class PackBitmapIndex {
 	public static PackBitmapIndex open(File idxFile, PackIndex packIndex,
 			PackReverseIndex reverseIndex)
 			throws IOException {
-		try (SilentFileInputStream fd = new SilentFileInputStream(idxFile)) {
+		try (FileInputStream fd = new FileInputStream(idxFile)) {
 			try {
 				return read(fd, packIndex, reverseIndex);
 			} catch (IOException ioe) {
