@@ -59,7 +59,7 @@ import org.eclipse.jgit.util.IO;
 import org.eclipse.jgit.util.MutableInteger;
 import org.eclipse.jgit.util.NB;
 import org.eclipse.jgit.util.TemporaryBuffer;
-import org.eclipse.jgit.util.io.SilentFileInputStream;
+import java.io.FileInputStream;
 
 /**
  * Support for the Git dircache (aka index file).
@@ -403,11 +403,19 @@ public class DirCache {
 			throw new IOException(JGitText.get().dirCacheDoesNotHaveABackingFile);
 		if (!liveFile.exists())
 			clear();
-		else if (snapshot == null || snapshot.isModified(liveFile)) {
-			try (SilentFileInputStream inStream = new SilentFileInputStream(
-					liveFile)) {
-				clear();
-				readFrom(inStream);
+		else if (snapshot == null || snapshot.isModified(liveFile)) {		
+			try {
+				final FileInputStream inStream = new FileInputStream(liveFile);
+				try {
+					clear();
+					readFrom(inStream);
+				} finally {
+					try {
+						inStream.close();
+					} catch (IOException err2) {
+						// Ignore any close failures.
+					}
+				}
 			} catch (FileNotFoundException fnfe) {
 				if (liveFile.exists()) {
 					// Panic: the index file exists but we can't read it
@@ -419,7 +427,7 @@ public class DirCache {
 				// and actually opening the path. That's fine, its empty.
 				//
 				clear();
-			}
+			}										
 			snapshot = FileSnapshot.save(liveFile);
 		}
 	}
