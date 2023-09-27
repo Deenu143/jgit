@@ -1631,7 +1631,11 @@ public class DirCacheCheckout {
 				}
 			} else {
 				try (InputStream in = inputStream.load()) {
-					in.transferTo(channel);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        channel.write(buffer, 0, bytesRead);
+                    }
 				}
 			}
 		}
@@ -1693,7 +1697,11 @@ public class DirCacheCheckout {
 					// command then proceed as if there would not have been a
 					// builtin filter (only if the filter is not mandatory).
 					try (InputStream again = inputStream.load()) {
-						again.transferTo(channel);
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = again.read(buffer)) != -1) {
+                            channel.write(buffer, 0, bytesRead);
+                        }					
 					}
 				} else {
 					throw e;
